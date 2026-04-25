@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card metric-card">
+            <div class="metric-value">{{ total_services }}</div>
+            <div class="metric-label">
+                <i class="fas fa-server"></i> Total Services
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card metric-card">
+            <div class="metric-value">{{ total_checks_today }}</div>
+            <div class="metric-label">
+                <i class="fas fa-clock"></i> Checks Today
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card metric-card">
+            <div class="metric-value text-danger">{{ active_alerts }}</div>
+            <div class="metric-label">
+                <i class="fas fa-exclamation-triangle"></i> Active Alerts
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card metric-card">
+            <div class="metric-value">
+                <span class="country-flag">🇸🇦</span> {{ ksa_services }}
+            </div>
+            <div class="metric-label">
+                <i class="fas fa-flag"></i> KSA Services
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Services by Country -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <span class="country-flag">🇸🇦</span>
+                    Saudi Arabia Services
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="metric-value text-primary">{{ ksa_services }}</div>
+                        <div class="metric-label">Monitored</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-value text-info">{{ (ksa_services + qa_services) - ksa_services }}</div>
+                        <div class="metric-label">Other</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <span class="country-flag">🇶🇦</span>
+                    Qatar Services
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="metric-value text-primary">{{ qa_services }}</div>
+                        <div class="metric-label">Monitored</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-value text-info">{{ (ksa_services + qa_services) - qa_services }}</div>
+                        <div class="metric-label">Other</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i>
+                    Recent Activity
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                {% if recent_checks %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Status</th>
+                                    <th>Response Time</th>
+                                    <th>Checked</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for check in recent_checks[:10] %}
+                                <tr>
+                                    <td>
+                                        {% if check.service %}
+                                            <strong>{{ check.service.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ check.service.country }}</small>
+                                        {% else %}
+                                            <em>Unknown Service</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if check.is_available %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Unavailable</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if check.response_time %}
+                                            {{ "%.0f"|format(check.response_time) }}ms
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ check.checked_at.strftime('%H:%M:%S') }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-info-circle fa-3x"></i>
+                        <p class="mt-3">No recent activity found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="fas fa-rocket"></i>
+                    Quick Actions
+                </h5>
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('web.services') }}" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-server"></i> View Services
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('web.alerts') }}" class="btn btn-danger btn-lg w-100">
+                            <i class="fas fa-exclamation-triangle"></i> View Alerts
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('web.metrics') }}" class="btn btn-info btn-lg w-100">
+                            <i class="fas fa-chart-line"></i> View Metrics
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('web.api_status') }}" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-heartbeat"></i> API Status
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status Overview -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i>
+                    Service Status Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    System Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>API Version</span>
+                        <span class="badge bg-primary rounded-pill">v1.0.0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Status</span>
+                        <span class="badge bg-success rounded-pill">Operational</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Last Update</span>
+                        <span class="badge bg-info rounded-pill">Live</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Monitored Services</span>
+                        <span class="badge bg-secondary rounded-pill">{{ total_services }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+<script>
+// Pass Jinja2 variables to JavaScript
+const ksaServices = {{ ksa_services }};
+const qaServices = {{ qa_services }};
+
+// Auto-refresh dashboard every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
+
+// Add real-time updates (WebSocket or polling)
+function startRealTimeUpdates() {
+    setInterval(function() {
+        fetch('/api/v1/system-status')
+            .then(response => response.json())
+            .then(data => {
+                console.log('System status:', data);
+                // Update UI elements based on real-time data
+                updateSystemIndicators(data);
+            })
+            .catch(error => console.error('Error fetching system status:', error));
+    }, 30000); // Update every 30 seconds
+}
+
+function updateSystemIndicators(data) {
+    // Update status indicators based on real-time data
+    const indicators = document.querySelectorAll('.status-indicator');
+    indicators.forEach(indicator => {
+        const component = indicator.getAttribute('data-component');
+        if (component && data.components[component]) {
+            const status = data.components[component].status;
+            indicator.className = `status-indicator status-${status}`;
+        }
+    });
+}
+
+// Initialize real-time updates
+document.addEventListener('DOMContentLoaded', function() {
+    startRealTimeUpdates();
+});
+</script>
+{% endblock %}
